@@ -1,0 +1,47 @@
+[
+    {
+        "nome": "G1 RS",
+        "url": "https://g1.globo.com/rss/g1/rs/",
+        "categoria": "Rio Grande do Sul"
+    },
+    {
+        "nome": "G1 Brasil",
+        "url": "https://g1.globo.com/rss/g1/brasil/",
+        "categoria": "Brasil"
+    },
+    {
+        "nome": "Folha - Mundo",
+        "url": "https://feeds.folha.uol.com.br/mundo/rss091.xml",
+        "categoria": "Mundo"
+    },
+    {
+        "nome": "Folha - Saude",
+        "url": "https://feeds.folha.uol.com.br/equilibrioesaude/rss091.xml",
+        "categoria": "Saúde"
+    },
+    {
+        "nome": "Folha - Ciencia",
+        "url": "https://feeds.folha.uol.com.br/ciencia/rss091.xml",
+        "categoria": "Ciência"
+    },
+    {
+        "nome": "Folha - Mercado",
+        "url": "https://feeds.folha.uol.com.br/mercado/rss091.xml",
+        "categoria": "Mercado"
+    },
+    {
+        "nome": "Folha - Cotidiano",
+        "url": "https://feeds.folha.uol.com.br/cotidiano/rss091.xml",
+        "categoria": "Cotidiano"
+    },
+    {
+        "nome": "Folha - Opiniao",
+        "url": "https://feeds.folha.uol.com.br/opiniao/rss091.xml",
+        "categoria": "Opinião"
+    },
+    {
+        "nome": "Folha - Poder",
+        "url": "https://feeds.folha.uol.com.br/poder/rss091.xml",
+        "categoria": "Poder"
+    }
+]

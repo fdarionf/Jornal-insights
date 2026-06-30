@@ -1,0 +1,12 @@
+{
+  "emeraldwalk.runonsave": {
+    "commands": [
+      {
+        "match": "\\.py$",
+        "cmd": "${workspaceFolder}\\.vscode\\ruff-format.cmd \"${file}\"",
+        "messageAfter": "Ruff: formatado"
+      }
+    ]
+  },
+  "files.autoSave": "off"
+}

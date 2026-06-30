@@ -1,0 +1,61 @@
+---
+description: Manter docs/VISAO.md vivo — perguntar antes de registrar mudanças no projeto
+alwaysApply: true
+---
+
+# Documento de visão (docs/VISAO.md)
+
+O arquivo `docs/VISAO.md` é a fonte de verdade da **visão do produto**, **roadmap**, **decisões** e **ideias** do jornal-insights.
+
+## Quando uma decisão ou mudança aparece
+
+Sempre que a conversa envolver **alteração no projeto** — código, arquitetura, escopo, regra de negócio, brainstorm ou ideia de implementação — o agente deve **perguntar explicitamente** ao Darion se isso deve entrar no documento.
+
+Não assumir nem atualizar silenciosamente sem confirmação.
+
+### Formato da pergunta
+
+Oferecer opções com **teor de ação**, para o Darion responder copiando/adaptando:
+
+- *"Altere o VISAO.md — marque X como concluído no roadmap"*
+- *"Acrescente isso no escopo de desenvolvimento (Fase N)"*
+- *"Coloque isso nas ideias do projeto (backlog §10)"*
+- *"Registre como decisão técnica (§7)"*
+- *"Registre como regra de negócio (§8)"*
+- *"Não inclua no documento agora"*
+
+Uma pergunta curta por vez; não bloquear o fluxo de código por isso.
+
+## Quando o Darion confirmar com ação
+
+Atualizar `docs/VISAO.md` conforme a instrução:
+
+| Instrução do usuário | Seção alvo |
+|---|---|
+| concluído / feito / implementado | §5 Estado atual + §6 Roadmap (checkbox) |
+| escopo / fase / roadmap | §6 Roadmap |
+| decisão técnica | §7 Decisões técnicas |
+| regra de negócio / produto | §8 Regras de negócio |
+| ideia / backlog / depois | §10 Backlog de ideias |
+| visão / objetivo / diferencial | §1–§2 ou §4 Pipeline |
+
+Manter o doc **conciso** — bullets e tabelas, não ensaios.
+
+## Quando atualizar sem perguntar
+
+Somente se o Darion disser explicitamente na mesma mensagem, ex.:
+- *"Atualiza o VISAO.md"*
+- *"Registra isso no documento"*
+- *"Altere o VISAO.md — ..."*
+
+## O que NÃO fazer
+
+- Não editar `README.md` salvo pedido explícito.
+- Não reescrever o documento inteiro a cada sessão — diff mínimo.
+- Não registrar detalhes triviais (typo, indentação, config local de editor).
+
+## Ao encerrar sessão com entrega concluída
+
+Se houve marco claro (feature pronta, fase fechada) e o Darion **não** respondeu sobre o doc, lembrar uma vez:
+
+*"Quer que eu atualize o VISAO.md? Opções: [listar ações possíveis]"*
