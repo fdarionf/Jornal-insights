@@ -84,27 +84,26 @@ sources.json
 
 ## 5. Estado atual
 
-**Fase 1 concluída** — collector com persistência em JSON (`src/collector.py`).
+**Fase 1 concluída** + **Fase 2 (código de persistência) concluída** — collector grava no PostgreSQL com dedup por `link`.
 
-| Função | Responsabilidade |
+| Módulo | Responsabilidade |
 |---|---|
-| `load_sources()` | Lê `data/sources.json` |
-| `fetch_feed()` | GET no feed via httpx |
-| `parse_feed()` | XML → artigos + fonte/categoria + `published_at` ISO |
-| `save_articles()` | Grava `all_articles` em `data/articles.json` |
-| `main()` | Orquestra coleta, acumula, imprime resumo, salva |
+| `collector.py` | Busca feeds, parseia, acumula, chama banco + JSON opcional |
+| `db.py` | Conexão via `.env`, `init_db()`, `save_articles()` com `ON CONFLICT DO NOTHING` |
 
-**Resultado validado:** 9 fontes com HTTP 200, ~900 artigos por execução.
-
-**Correções aplicadas:**
-- G1 RS: URL corrigida para `https://g1.globo.com/rss/g1/rs/` (faltava `/g1/` no path)
-- `published_at`: ISO 8601; `None` quando o feed não traz data
+**Resultado validado:**
+- 1ª coleta: ~900 artigos novos no banco
+- 2ª coleta: ~0–1 novos (dedup por `link` ok)
 
 **Artefatos:**
 - `data/sources.json` — fontes RSS (versionado)
-- `data/articles.json` — snapshot da coleta (gitignored; sobrescrito a cada run)
+- `data/articles.json` — snapshot opcional (gitignored)
+- `.env` — `DATABASE_URL` (gitignored); modelo em `.env.example`
+- `src/db.py` — persistência Postgres
 
-**Próximo passo imediato (Fase 2):** PostgreSQL na VM Linux + dedup por `link` na coleta (sem SQLite intermediário).
+**Infra:** VM Ubuntu + Docker + Postgres — [docs/INFRA.md](INFRA.md).
+
+**Próximo passo:** TTL / limpeza de notícias antigas, ou Fase 3 (clustering). Testes básicos ainda pendentes (§6.1).
 
 ---
 
@@ -129,14 +128,26 @@ sources.json
 
 ### Fase 2 — Persistência e qualidade dos dados (em andamento)
 
-- [ ] **PostgreSQL na VM Linux** (VirtualBox + Docker; dados em volume persistente)
-- [ ] Schema `articles` (`link` UNIQUE, `title`, `fonte`, `categoria`, `published_at`, `collected_at`)
-- [ ] Módulo `db.py` — conexão + insert/upsert
-- [ ] Integrar collector → banco (substituir ou complementar JSON)
-- [ ] **Dedup por `link`** (unique constraint + `ON CONFLICT DO NOTHING`)
+**Infraestrutura ✅**
+
+- [x] VM Ubuntu (VirtualBox) — NAT + Host-only
+- [x] SSH Windows → VM
+- [x] Docker + PostgreSQL 16 (`jornal-db`, volume `jornal_pgdata`)
+- [x] Porta 5432 acessível do Windows
+- [x] Documentação operacional — [docs/INFRA.md](INFRA.md)
+
+**Código ✅**
+
+- [x] Schema `articles` (`link` UNIQUE, `title`, `fonte`, `categoria`, `published_at`, `collected_at`)
+- [x] Módulo `db.py` — conexão + insert com dedup
+- [x] Integrar collector → banco (+ JSON opcional via `save_articles_json`)
+- [x] **Dedup por `link`** (`ON CONFLICT (link) DO NOTHING`)
+- [x] Índice em `published_at` (+ UNIQUE em `link`)
+
+**Pendente (Fase 2)**
+
 - [ ] **Retenção (TTL):** apagar ou arquivar notícias > 60–90 dias (máx. 2–3 meses)
 - [ ] Job agendado de limpeza (`DELETE WHERE published_at < ...`)
-- [ ] Índice em `published_at` e `link`
 
 ### 6.1 Testes — escopo mínimo (quando retomar)
 
@@ -193,6 +204,12 @@ sources.json
 | **`published_at` ISO via `calendar.timegm`** | `published_parsed` do feedparser é UTC struct |
 | **JSON como snapshot temporário** | `articles.json` gitignored; banco será fonte de verdade na Fase 2 |
 | **G1 RS URL** | Padrão `/rss/g1/{região}/`, não `/rss/{região}/` |
+| **Infra em VM** | Ubuntu + Docker + Postgres; rede Host-only para acesso do Windows |
+| **`.env` + `.env.example`** | Credenciais fora do git; connection string no `.env` |
+| **psycopg + python-dotenv** | Cliente Postgres 3.x; carregar `DATABASE_URL` sem hardcode |
+| **`CREATE TABLE IF NOT EXISTS` no Python** | Schema sobe junto com o app; sem migration ainda |
+| **`ON CONFLICT (link) DO NOTHING`** | Dedup na inserção; 2ª coleta não duplica |
+| **`save_articles` (db) vs `save_articles_json`** | Evitar conflito de nomes; banco + JSON em paralelo |
 
 ---
 
@@ -353,7 +370,7 @@ Links das matérias originais permanecem na história agrupada (§9.1); INSIGHTS
 
 1. **Antes de implementar uma feature nova** — checar se encaixa na fase atual
 2. **Depois de decisões importantes** — adicionar seção ou item no roadmap
-3. **Ao retomar após pausa** — ler §5 (estado atual) e §6 (próxima fase)
+3. **Ao retomar após pausa** — ler §5 (estado atual), §6 (próxima fase) e [INFRA.md](INFRA.md) (subir VM/Postgres)
 4. **Ao desenhar UI ou prompts do agente** — consultar §9 (templates UX)
 
 ### Manutenção automática (regra do Cursor)
@@ -370,4 +387,4 @@ Respostas esperadas (teor de ação):
 
 Sem confirmação explícita, o doc **não** é alterado.
 
-Última atualização: junho/2026 — **Fase 1 concluída** (collector + JSON); **Fase 2** inicia com PostgreSQL na VM; testes básicos sinalizados em §6.1 (pendente).
+Última atualização: julho/2026 — collector → Postgres com dedup por `link` (~900 artigos); próximo: TTL ou Fase 3; testes §6.1 ainda pendentes.

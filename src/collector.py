@@ -4,6 +4,7 @@ import httpx
 import feedparser
 import calendar
 from datetime import datetime, timezone
+from db import init_db, save_articles
 
 source_path = Path(__file__).parent.parent / "data" / "sources.json"
 articles_path = Path(__file__).parent.parent / "data" / "articles.json"
@@ -46,12 +47,13 @@ def parse_feed(response: httpx.Response, source: dict) -> list[dict]:
     return articles
 
 
-def save_articles(articles: list[dict]) -> None:
+def save_articles_json(articles: list[dict]) -> None:
     with articles_path.open("w", encoding="utf-8") as file:
         json.dump(articles, file, ensure_ascii=False, indent=4)
 
 
 def main() -> None:
+    init_db()
     sources = load_sources()
     print(f"Fontes carregadas: {len(sources)}\n")
     with httpx.Client(timeout=30.0) as client:
@@ -84,8 +86,11 @@ def main() -> None:
 
         print(f"Total de artigos coletados: {len(all_articles)}")
 
-        save_articles(all_articles)
-        print(f"Artigos salvos com sucesso em {articles_path}!")
+        inserted = save_articles(all_articles)
+        print(f"Novos no banco: {inserted}")
+
+        save_articles_json(all_articles)
+        print(f"Json salvo em {articles_path}!")
 
 
 if __name__ == "__main__":
