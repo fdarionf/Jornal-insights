@@ -3,8 +3,8 @@ from pathlib import Path
 import httpx
 import feedparser
 import calendar
-from datetime import datetime, timezone
-from db import init_db, save_articles
+from datetime import datetime, timezone, timedelta
+from db import init_db, save_articles, purge_old_articles
 
 source_path = Path(__file__).parent.parent / "data" / "sources.json"
 articles_path = Path(__file__).parent.parent / "data" / "articles.json"
@@ -12,6 +12,9 @@ articles_path = Path(__file__).parent.parent / "data" / "articles.json"
 HEADERS = {
     "User-Agent": "jornal-insights/0.1 (RSS collector; contato: seu-email)",
 }
+
+# TTL (Time To Live) em dias para remover artigos antigos
+TTL_DAYS = 30
 
 
 def load_sources() -> list[dict]:
@@ -52,6 +55,20 @@ def save_articles_json(articles: list[dict]) -> None:
         json.dump(articles, file, ensure_ascii=False, indent=4)
 
 
+def filter_recent(articles: list[dict], TTL_DAYS: int) -> list[dict]:
+    cutoff = datetime.now(timezone.utc) - timedelta(days=TTL_DAYS)
+    recent = []
+    for article in articles:
+        published = article["published_at"]
+        if published is None:
+            recent.append(article)
+            continue
+        published_dt = datetime.fromisoformat(published)
+        if published_dt >= cutoff:
+            recent.append(article)
+    return recent
+
+
 def main() -> None:
     init_db()
     sources = load_sources()
@@ -86,11 +103,15 @@ def main() -> None:
 
         print(f"Total de artigos coletados: {len(all_articles)}")
 
-        inserted = save_articles(all_articles)
+        recent_articles = filter_recent(all_articles, TTL_DAYS)
+        inserted = save_articles(recent_articles)
         print(f"Novos no banco: {inserted}")
 
-        save_articles_json(all_articles)
-        print(f"Json salvo em {articles_path}!")
+        # save_articles_json(recent_articles)
+        # print(f"Json salvo em {articles_path}!")
+
+        deleted = purge_old_articles(TTL_DAYS)
+        print(f"Removidos por TTL de (>{TTL_DAYS} dias): {deleted}")
 
 
 if __name__ == "__main__":

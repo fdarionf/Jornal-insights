@@ -30,6 +30,22 @@ def init_db() -> None:
         conn.commit()
 
 
+def purge_old_articles(days: int = 30) -> int:
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                DELETE FROM articles
+                WHERE COALESCE(published_at, collected_at)
+                      < NOW() - make_interval(days => %s)
+                """,
+                (days,),
+            )
+            deleted = cur.rowcount
+        conn.commit()
+        return deleted
+
+
 def save_articles(articles: list[dict]) -> int:
     with get_connection() as conn:
         with conn.cursor() as cur:

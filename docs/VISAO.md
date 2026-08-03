@@ -103,7 +103,7 @@ sources.json
 
 **Infra:** VM Ubuntu + Docker + Postgres — [docs/INFRA.md](INFRA.md).
 
-**Próximo passo:** TTL / limpeza de notícias antigas, ou Fase 3 (clustering). Testes básicos ainda pendentes (§6.1).
+**Próximo passo:** Fase 3 (clustering) — sem API. API na Fase 4 (exposição UI/insights).
 
 ---
 
@@ -146,8 +146,8 @@ sources.json
 
 **Pendente (Fase 2)**
 
-- [ ] **Retenção (TTL):** apagar ou arquivar notícias > 60–90 dias (máx. 2–3 meses)
-- [ ] Job agendado de limpeza (`DELETE WHERE published_at < ...`)
+- [x] **Retenção (TTL):** 30 dias — `filter_recent` + `purge_old_articles`
+- [ ] Job agendado de limpeza standalone (hoje o purge roda junto com o collector)
 
 ### 6.1 Testes — escopo mínimo (quando retomar)
 
@@ -168,6 +168,7 @@ sources.json
 
 ### Fase 4 — Insights com agente (motor de pauta)
 
+- [ ] **API** (ex.: FastAPI) — exposição do produto: listar clusters, artigos, disparar INSIGHTS (§7)
 - [ ] UI **História agrupada** — template §9.1 (sempre visível ao abrir cluster)
 - [ ] Botão **INSIGHTS** — gera conteúdo on-demand (template §9.2); não carregar por padrão
 - [ ] RAG sobre artigos + clusters + janela temporal (dia / semana / mês)
@@ -183,9 +184,10 @@ sources.json
 
 ### Fase 5 — Produto
 
-- [ ] Agendamento da coleta (cron / task scheduler)
-- [ ] Configuração de fontes via UI (opcional)
+- [ ] **Agendamento da coleta** (cron / systemd na VM) — requisito de produto (§8); usuário final não roda collector na mão
+- [ ] Configuração de fontes / `TTL_DAYS` via UI (opcional)
 - [ ] Métricas e observabilidade
+- [ ] Empacotar stack (ex.: docker-compose: db + api + worker) — quando for expor/deployar
 
 ---
 
@@ -210,16 +212,32 @@ sources.json
 | **`CREATE TABLE IF NOT EXISTS` no Python** | Schema sobe junto com o app; sem migration ainda |
 | **`ON CONFLICT (link) DO NOTHING`** | Dedup na inserção; 2ª coleta não duplica |
 | **`save_articles` (db) vs `save_articles_json`** | Evitar conflito de nomes; banco + JSON em paralelo |
+| **API só na exposição do produto** | Clustering e jobs de dados sem API (script + Postgres + DBeaver). API entra com UI / INSIGHTS / consumo externo |
 
 ---
 
 ## 8. Regras de negócio (ideias validadas)
 
+### Produto fechado — práticas de mercado
+
+O jornal-insights é um **produto fechado** (rentável ou não). Decisões técnicas e de operação devem seguir práticas adequadas a mercado, não atalhos de laboratório permanentes.
+
+| Evitar (só lab) | Preferir (produto) |
+|---|---|
+| Collector rodado na mão pelo usuário | Agendamento (cron / systemd / worker) — Fase 5 |
+| Config só hardcoded | Config externa (`.env` → depois painel) |
+| JSON como fonte da verdade | Banco como fonte da verdade |
+| Tudo no PC do desenvolvedor | Serviço na VM / servidor |
+
+Scripts manuais e JSON opcional são válidos **durante o aprendizado**, mas o alvo é operação autônoma: coleta + TTL + banco sem intervenção do jornalista.
+
 ### Retenção de dados
 
 - Não acumular notícias **indefinidamente**
-- Manter janela **quente** de ~30–90 dias (até 2–3 meses no máximo)
-- Considerar **arquivar** (JSON frio) antes de deletar do banco ativo
+- Janela **quente** atual: **30 dias** (`TTL_DAYS`; configurável depois via painel)
+- Critério: `published_at`; se NULL, `collected_at`
+- Filtrar na coleta + purge no banco (evita loop RSS antigo ↔ TTL)
+- Considerar **arquivar** (JSON frio) antes de deletar do banco ativo (futuro)
 
 ### Dedup
 
@@ -387,4 +405,4 @@ Respostas esperadas (teor de ação):
 
 Sem confirmação explícita, o doc **não** é alterado.
 
-Última atualização: julho/2026 — collector → Postgres com dedup por `link` (~900 artigos); próximo: TTL ou Fase 3; testes §6.1 ainda pendentes.
+Última atualização: agosto/2026 — API só na exposição (Fase 4); clustering sem API; próximo: Fase 3.
